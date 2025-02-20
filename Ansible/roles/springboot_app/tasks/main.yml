@@ -1,0 +1,63 @@
+# roles/springboot_app/tasks/main.yml
+---
+# Task 1: Ensure User Management directory exists
+- name: Ensure User Management directory exists
+  file:
+    path: "{{ project_dir }}"
+    state: directory
+    mode: '0755'
+
+# Task 2: Build User Management JAR using Maven
+- name: Build User Management JAR using Maven
+  command: mvn clean package -DskipTests
+  args:
+    chdir: "{{ project_dir }}"
+  register: user_maven_result
+  changed_when: "'BUILD SUCCESS' in user_maven_result.stdout"
+  ignore_errors: no
+
+# Task 3: Copy Dockerfile to Remote Server
+- name: Copy Dockerfile to remote machine
+  copy:
+    src: "Dockerfile"
+    dest: "{{ project_dir }}/Dockerfile"
+    mode: '0644'
+
+# Task 4: Copy JAR file to Docker build context
+- name: Copy JAR file to remote machine
+  copy:
+    src: "{{ project_dir }}/target/{{ jar_file }}"
+    dest: "{{ project_dir }}/app.jar"
+    mode: '0755'
+
+# Task 5: Remove Existing User Management Container (if exists)
+- name: Remove existing User Management container (if exists)
+  docker_container:
+    name: springboot-container
+    state: absent
+  ignore_errors: yes
+
+# Task 6: Build User Management Docker Image
+- name: Build User Management Docker Image
+  docker_image:
+    name: springboot-app
+    build:
+      path: "{{ project_dir }}"
+      dockerfile: "{{ project_dir }}/Dockerfile"
+    source: build
+
+# Task 7: Run User Management Container
+- name: Start User Management Container
+  docker_container:
+    name: springboot-container
+    image: springboot-app
+    state: started
+    restart_policy: always
+    links:
+      - postgres-container
+    ports:
+      - "8080:8080"
+    env:
+      SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-container:5432/docker_trials"
+      SPRING_DATASOURCE_USERNAME: "postgres"
+      SPRING_DATASOURCE_PASSWORD: "funkY!123"

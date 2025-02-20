@@ -1,0 +1,11 @@
+---
+- name: Stop Spring Boot Container
+  docker_container:
+    name: springboot-container
+    state: stopped
+
+- name: Start Spring Boot Container
+  docker_container:
+    name: springboot-container
+    state: started
+

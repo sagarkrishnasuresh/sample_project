@@ -1,0 +1,34 @@
+---
+# Task: Pull PostgreSQL Docker Image
+- name: Pull PostgreSQL Image
+  docker_image:
+    name: postgres:15
+    source: pull
+  notify: 
+    - Start PostgreSQL Container
+    - Stop PostgreSQL Container
+
+# Task: Remove Existing PostgreSQL Container (if exists)
+- name: Remove existing PostgreSQL container (if exists)
+  docker_container:
+    name: postgres-container
+    state: absent
+  ignore_errors: yes
+
+# Task: Run PostgreSQL Container
+- name: Start PostgreSQL Container
+  docker_container:
+    name: postgres-container
+    image: postgres:15
+    state: started
+    restart_policy: always
+    env:
+      POSTGRES_USER: "postgres"
+      POSTGRES_PASSWORD: "funkY!123"
+      POSTGRES_DB: "docker_trials"
+    ports:
+      - "5432:5432"
+  notify:
+    - Start PostgreSQL Container
+    - Stop PostgreSQL Container
+

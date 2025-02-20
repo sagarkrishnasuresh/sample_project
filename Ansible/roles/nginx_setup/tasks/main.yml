@@ -1,0 +1,22 @@
+---
+# Task 1: Install Nginx
+- name: Install Nginx
+  apt:
+    name: nginx
+    state: present
+    update_cache: yes
+
+# Task 2: Copy Nginx Configuration
+- name: Copy Nginx Configuration File
+  template:
+    src: nginx.conf.j2
+    dest: /etc/nginx/sites-available/default
+  notify: Restart Nginx
+
+# Task 3: Enable and Start Nginx
+- name: Ensure Nginx is running
+  service:
+    name: nginx
+    state: started
+    enabled: yes
+

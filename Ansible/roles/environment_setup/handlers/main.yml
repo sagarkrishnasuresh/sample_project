@@ -1,0 +1,11 @@
+---
+- name: Stop Docker Service
+  service:
+    name: docker
+    state: stopped
+
+- name: Start Docker Service
+  service:
+    name: docker
+    state: started
+
