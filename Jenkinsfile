@@ -4,8 +4,9 @@ pipeline {
         maven 'Maven3'
     }
     environment {
-        JAVA_HOME = '/usr/lib/jvm/java-17-openjdk-amd64'
-        PATH = "${JAVA_HOME}/bin:${PATH}"
+        KUBECONFIG = '/var/lib/jenkins/.kube/config'
+        MINIKUBE_HOME = '/var/lib/jenkins/.minikube'
+        PATH = '/usr/local/bin:/usr/bin:/bin'
     }
     stages {
 
