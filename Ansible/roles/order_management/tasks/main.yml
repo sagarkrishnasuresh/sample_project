@@ -10,7 +10,7 @@
 - name: Build Docker image for order_management
   community.docker.docker_image:
     build:
-      path: ../../order_management
+      path: /var/lib/jenkins/workspace/sprinboot_sample_deployment/order_management
     name: "{{ dockerhub_username }}/order_management"
     tag: latest
     source: build
