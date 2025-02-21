@@ -18,3 +18,4 @@
   community.docker.docker_image:
     name: "{{ dockerhub_username }}/user_management:latest"
     push: yes
+    source: local
