@@ -19,3 +19,4 @@
   community.docker.docker_image:
     name: "{{ dockerhub_username }}/order_management:latest"
     push: yes
+    source: local
