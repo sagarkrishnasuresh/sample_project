@@ -14,6 +14,14 @@
 
 - name: Deploy PostgreSQL in Kubernetes
   command: kubectl apply -f ../../kubernetes/postgres-deployment.yml
+  environment:
+    KUBECONFIG: "/var/lib/jenkins/.kube/config"
+    MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
+    PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in Kubernetes
   command: kubectl apply -f ../../kubernetes/postgres-service.yml
+  environment:
+    KUBECONFIG: "/var/lib/jenkins/.kube/config"
+    MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
+    PATH: "/usr/local/bin:/usr/bin:/bin"
