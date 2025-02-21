@@ -19,14 +19,18 @@
     state: started
     enabled: yes
 
-# ✅ Install kubectl
-- name: Download kubectl binary
+- name: Check if kubectl is already installed
+  stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_file
+
+- name: Download kubectl binary if not installed
   get_url:
     url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
     mode: '0755'
-  args:
-    creates: /usr/local/bin/kubectl
+  when: not kubectl_file.stat.exists
+
 
 
 
