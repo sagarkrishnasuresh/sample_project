@@ -1,0 +1,15 @@
+# roles/user_management/tasks/main.yml
+---
+- name: Build Docker image for user_management
+  community.docker.docker_image:
+    build:
+      path: ../../user_management
+    name: "{{ dockerhub_username }}/user_management"
+    tag: latest
+    source: build
+
+- name: Push Docker image for user_management
+  community.docker.docker_image:
+    name: "{{ dockerhub_username }}/user_management:latest"
+    push: yes
+

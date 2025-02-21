@@ -1,0 +1,11 @@
+---
+- name: Complete Deployment Process
+  hosts: localhost
+  become: yes
+  gather_facts: yes
+
+  roles:
+    - device_setup
+    - postgres_setup
+    - user_management
+    - order_management

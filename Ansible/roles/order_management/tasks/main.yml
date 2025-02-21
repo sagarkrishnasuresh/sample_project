@@ -1,0 +1,15 @@
+# roles/order_management/tasks/main.yml
+---
+- name: Build Docker image for order_management
+  community.docker.docker_image:
+    build:
+      path: ../../order_management
+    name: "{{ dockerhub_username }}/order_management"
+    tag: latest
+    source: build
+
+- name: Push Docker image for order_management
+  community.docker.docker_image:
+    name: "{{ dockerhub_username }}/order_management:latest"
+    push: yes
+
