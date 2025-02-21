@@ -14,19 +14,9 @@ spec:
     spec:
       containers:
         - name: user-management
-          image: your-dockerhub-username/user_management:latest
+          image: sagarkrishnasuresh/user_management:latest
           ports:
             - containerPort: 8080
-          env:
-            - name: SPRING_DATASOURCE_URL
-              value: jdbc:postgresql://postgres-service:5432/docker_trials
-            - name: SPRING_DATASOURCE_USERNAME
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: POSTGRES_USER
-            - name: SPRING_DATASOURCE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: postgres-credentials
-                  key: POSTGRES_PASSWORD
+          envFrom:
+            - secretRef:
+                name: postgres-credentials
