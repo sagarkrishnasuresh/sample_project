@@ -9,7 +9,7 @@
 - name: Build Docker image for user_management
   community.docker.docker_image:
     build:
-      path: ../../user_management
+      path: /var/lib/jenkins/workspace/sprinboot_sample_deployment/user_management
     name: "{{ dockerhub_username }}/user_management"
     tag: latest
     source: build
