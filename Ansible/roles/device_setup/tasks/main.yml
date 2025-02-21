@@ -1,6 +1,6 @@
-# roles/device_setup/tasks/main.yml
+# Ansible/roles/device_setup/tasks/main.yml
 ---
-- name: Install required packages
+- name: Install Docker and dependencies
   apt:
     name:
       - docker.io
@@ -18,3 +18,39 @@
     name: docker
     state: started
     enabled: yes
+
+# ✅ Install kubectl
+- name: Download kubectl binary
+  get_url:
+    url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: '0755'
+
+- name: Verify kubectl installation
+  command: kubectl version --client
+  register: kubectl_result
+  ignore_errors: yes
+
+- name: Display kubectl version
+  debug:
+    msg: "{{ kubectl_result.stdout }}"
+
+# ✅ Ensure kubectl is available in Jenkins PATH
+- name: Create symbolic link for kubectl
+  file:
+    src: /usr/local/bin/kubectl
+    dest: /usr/bin/kubectl
+    state: link
+    force: yes
+
+- name: Ensure kubectl is accessible by Jenkins user
+  lineinfile:
+    path: /home/jenkins/.bashrc
+    line: 'export PATH=$PATH:/usr/local/bin'
+    create: yes
+    mode: '0644'
+
+- name: Apply .bashrc changes for Jenkins user
+  command: bash -c "source /home/jenkins/.bashrc"
+  become_user: jenkins
+
