@@ -25,8 +25,8 @@
     url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
     mode: '0755'
-    args:
-      creates: /usr/local/bin/kubectl
+  args:
+    creates: /usr/local/bin/kubectl
 
 
 
