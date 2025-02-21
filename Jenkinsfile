@@ -37,7 +37,7 @@ pipeline {
         stage('Run Ansible Playbook') {
             steps {
                 dir('Ansible') {
-                    sh 'ansible-playbook complete_deployment.yml --ask-become-pass'
+                    sh 'ansible-playbook complete_deployment.yml'
                 }
             }
         }
