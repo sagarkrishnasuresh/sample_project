@@ -62,6 +62,20 @@ pipeline {
                     sh 'rm -rf user_management/target'
                     sh 'rm -rf order_management/target'
 
+                    sh '''
+                    if [ ! -d "/var/lib/jenkins/tmp" ]; then
+                        mkdir -p /var/lib/jenkins/tmp
+                        echo "Directory /var/lib/jenkins/tmp created."
+                    else
+                        echo "Directory /var/lib/jenkins/tmp already exists."
+                    fi
+                    '''
+
+                    sh '''
+                    sudo chown -R jenkins:jenkins /var/lib/jenkins/tmp
+                    sudo chmod 755 /var/lib/jenkins/tmp
+                    '''
+
                     // Clear Ansible temporary files
                     sh 'rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml'
                     sh 'rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml'
