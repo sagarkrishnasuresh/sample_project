@@ -64,10 +64,10 @@ pipeline {
 
                     // Clear Ansible temporary files
                     sh 'rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml'
-                    sh 'rm -f /tmp/kubernetes-secrets.yml'
+                    sh 'rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml'
 
                     // Clear Docker build cache
-                    sh 'docker system prune -a -f'
+                    sh 'sudo docker system prune -a -f'
 
                     // Clear Kubernetes logs (optional)
                     sh 'rm -rf ~/.kube/cache'
