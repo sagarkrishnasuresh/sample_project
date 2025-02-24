@@ -76,9 +76,7 @@ pipeline {
                     echo '✅ Residual files cleared successfully.'
                 }
             }
-
-
-    }
+        }
     post {
         success {
             echo 'Build and deployment completed successfully!'
