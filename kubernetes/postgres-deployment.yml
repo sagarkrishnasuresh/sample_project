@@ -17,9 +17,22 @@ spec:
           image: postgres:latest
           ports:
             - containerPort: 5432
-          envFrom:
-            - secretRef:
-                name: postgres-credentials
+          env:
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_USER
+
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_PASSWORD
+
+            - name: POSTGRES_DB
+              value: docker_trials
+
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
