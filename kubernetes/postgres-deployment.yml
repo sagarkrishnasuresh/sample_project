@@ -30,8 +30,11 @@ spec:
                   name: postgres-credentials
                   key: DB_PASSWORD
 
-            - name: POSTGRES_DB
-              value: docker_trials
+            - name: POSTGRES_URL
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: DB_URL
 
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
