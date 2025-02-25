@@ -6,7 +6,7 @@
     dest: /var/lib/jenkins/tmp/kubernetes-secrets.yml
 
 - name: Apply PostgreSQL Secrets in Kubernetes
-  command: kubectl apply -f /tmp/kubernetes-secrets.yml
+  command: kubectl apply -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
     MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
