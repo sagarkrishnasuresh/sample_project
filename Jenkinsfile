@@ -77,9 +77,9 @@ pipeline {
                     sh 'rm -rf user_management/target'
                     sh 'rm -rf order_management/target'
 
-                    // Clear Ansible temporary files
-                    sh 'rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml'
-                    sh 'rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml'
+                    // // Clear Ansible temporary files
+                    // sh 'rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml'
+                    // sh 'rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml'
 
                     
 
