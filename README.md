@@ -1,179 +1,150 @@
-# 🚀 Spring Boot Deployment Using Jenkins, Docker, Ansible, and Minikube
+# Deployment of User Management and Order Management Applications with PostgreSQL in Kubernetes
 
-This project demonstrates deploying two **Spring Boot** applications — **User Management** and **Order Management** — with a shared **PostgreSQL** database using **Docker**, **Ansible**, and **Minikube**, all orchestrated by **Jenkins CI/CD pipeline**.
+## Project Overview
+This project automates the deployment of two Spring Boot applications (`user-management` and `order-management`) along with a PostgreSQL database using Kubernetes, Jenkins, and Ansible.
 
----
-
-## 💁️ **Project Directory Structure**
+## Project Structure
 ```
-.
-sample_project
-├── Ansible
-│   ├── ansible.cfg
-│   ├── complete_deployment.yml
-│   ├── vault_password
-│   └── roles
-│       ├── device_setup
-│       │   └── tasks
-│       │       └── main.yml
-│       ├── postgres_setup
-│       │   ├── defaults
-│       │   │   └── main.yml (Encrypted with Ansible Vault)
-│       │   ├── tasks
-│       │   │   └── main.yml
-│       │   └── templates
-│       │       └── kubernetes-secrets.yml.j2
-│       ├── user_management
-│       │   └── tasks
-│       │       └── main.yml
-│       └── order_management
-│           └── tasks
-│               └── main.yml
-├── Jenkinsfile
-├── kubernetes
-│   ├── kubernetes-secrets.yml
-│   ├── postgres-deployment.yml
-│   ├── postgres-service.yml
-│   ├── user_management-deployment.yml
-│   ├── user_management-service.yml
-│   ├── order_management-deployment.yml
-│   └── order_management-service.yml
-├── order_management
-│   ├── Dockerfile
-│   └── src
-└── user_management
-    ├── Dockerfile
-    └── src
+sample_project/
+│-- Ansible/
+│   │-- roles/
+│   │   │-- device_setup/
+│   │   │-- order_management/
+│   │   │-- postgres_setup/
+│   │   │-- user_management/
+│   │   │-- vault_password/
+│   │-- complete_deployment.yml
+│-- kubernetes/
+│   │-- kubernetes-secrets.yml
+│   │-- order-management-deployment.yml
+│   │-- order-management-service.yml
+│   │-- postgres-deployment.yml
+│   │-- postgres-service.yml
+│   │-- user-management-deployment.yml
+│   │-- user-management-service.yml
+│-- order_management/
+│-- user_management/
+│-- .gitignore
+│-- Jenkinsfile
+│-- README.md
 ```
 
 ---
-
-## ✅ **1. Prerequisites**
-Ensure the following tools are installed on your system:
-- **Docker** (with Docker daemon running)
-- **Jenkins** (installed and configured)
-- **Ansible** (with Ansible Vault)
-- **Minikube** (for Kubernetes)
-- **kubectl** (Kubernetes CLI)
-- **Git** (for version control)
+## Prerequisites
+- **Docker** installed and running
+- **Minikube** installed and configured
+- **Ansible** installed
+- **Jenkins** installed with necessary plugins
+- **kubectl** installed
 
 ---
+## Setup Instructions
 
-## 📺 **2. Docker Hub Setup**
-1. **Create a Docker Hub account:**  
-   [Docker Hub](https://hub.docker.com/)
-
-2. **Create two repositories:**
-    - `docker_username/user_management`
-    - `docker_username/order_management`
-
-3. **Login to Docker locally:**
-```bash
-docker login
+### 1. Clone the Repository
+```sh
+git clone https://github.com/sagarkrishnasuresh/sample_project.git
+cd sample_project
 ```
+
+### 2. Configure Jenkins Pipeline
+Ensure Jenkins has the required tools:
+- **Maven** (`Maven3` configured in Jenkins)
+- **Docker** with access to Docker Hub
+- **Ansible** installed
+
+Configure Jenkins pipeline with the provided **Jenkinsfile**.
+
+### 3. Setup Ansible Roles
+
+#### Device Setup
+Installs **Docker**, **Ansible**, and **kubectl** if not already installed.
+
+#### PostgreSQL Setup
+- Generates Kubernetes secrets for database credentials.
+- Deploys PostgreSQL in Kubernetes.
+- Applies PostgreSQL service configuration.
+
+#### Application Setup (User & Order Management)
+- Builds the Docker image.
+- Pushes it to Docker Hub.
+
+### 4. Run the Jenkins Pipeline
+
+Once configured, trigger the **Jenkins Pipeline** to:
+1. Clone the repository.
+2. Build the JAR files.
+3. Run the Ansible playbook.
+4. Deploy the applications and its services in **Minikube**.
+5. Cleanup residual files.
 
 ---
+## Kubernetes Resources
 
-## 🔑 **3. Store Sensitive Information Using Ansible Vault**
-1. **Encrypt Database Credentials and Docker Hub Credentials:**
-```yaml
-# Ansible/roles/postgres_setup/defaults/main.yml
-POSTGRES_USER: "db_username"
-POSTGRES_PASSWORD: "db_password"
-POSTGRES_DB: "db_name"
-SPRING_DATASOURCE_URL: "jdbc:postgresql://postgres-service:5432/db_name"
-dockerhub_username: "docker_username"
-dockerhub_password: "YOUR_DOCKERHUB_PASSWORD"
-dockerhub_email: "YOUR_EMAIL"
-```
+### 1. Secrets (Stored in Kubernetes Secrets)
+- `DB_URL`, `DB_USER`, and `DB_PASSWORD` are securely stored.
 
-2. **Encrypt the file using Ansible Vault:**
-```bash
-ansible-vault encrypt roles/postgres_setup/defaults/main.yml
-```
+### 2. Deployments
+- **PostgreSQL**: Deployed with a persistent volume.
+- **User Management & Order Management**: Retrieves credentials from Kubernetes secrets.
 
-3. **Store the vault password:**
-```bash
-echo "YourVaultPassword" > Ansible/vault_password/.vault_pass
-```
+### 3. Services
+- **PostgreSQL**: `ClusterIP` service for internal database communication.
+- **User Management**: `NodePort` for external access.
+- **Order Management**: `NodePort` for external access.
 
 ---
+## Verifying Deployment
 
-## 💪 **4. Build and Push Docker Images**
-1. **Dockerfile for both applications:**
-```Dockerfile
-FROM openjdk:17-jdk-slim
-WORKDIR /app
-COPY target/app.jar app.jar
-ENTRYPOINT ["java","-jar","app.jar"]
-```
-
-2. **Build and Push Docker Images:**
-```bash
-docker build -t docker_username/user_management:latest .
-docker push docker_username/user_management:latest
-
-docker build -t docker_username/order_management:latest .
-docker push docker_username/order_management:latest
-```
-
----
-
-## 🛠 **5. Kubernetes Deployment and Services**
-### PostgreSQL Deployment:
-- `postgres-deployment.yml`
-- `postgres-service.yml`
-
-### Applications Deployment:
-- `user_management-deployment.yml`
-- `user_management-service.yml`
-- `order_management-deployment.yml`
-- `order_management-service.yml`
-
----
-
-## 📄 **6. Ansible Playbook Execution**
-Run the **Ansible playbook**:
-```bash
-ansible-playbook complete_deployment.yml
-```
-
----
-
-## 🌐 **7. Jenkins Pipeline Setup**
-1. **Configure Jenkins Pipeline with `Jenkinsfile`**
-2. **Store Docker credentials in Jenkins**
-3. **Trigger Pipeline Execution**
-
----
-
-## 🚀 **8. Deploy Applications to Minikube**
-```bash
+### 1. Check if all pods are running
+```sh
 kubectl get pods
+```
+
+### 2. Get the exposed service ports
+```sh
 kubectl get services
-kubectl port-forward deployment/user-management 8080:8080
-kubectl port-forward deployment/order-management 8082:8082
 ```
-- **User Management:** [http://localhost:8080](http://localhost:8080)
-- **Order Management:** [http://localhost:8082](http://localhost:8082)
+
+### 3. Access APIs
+#### Fetch Users
+```sh
+curl http://<MINIKUBE_IP>:<USER_MANAGEMENT_NODEPORT>/api/users
+```
+#### Create User
+```sh
+curl -X POST http://<MINIKUBE_IP>:<USER_MANAGEMENT_NODEPORT>/api/users \
+  -H 'Content-Type: application/json' \
+  -d '{"name": "John Doe", "email": "johndoe@example.com"}'
+```
+#### Fetch Orders
+```sh
+curl http://<MINIKUBE_IP>:<ORDER_MANAGEMENT_NODEPORT>/api/orders
+```
+#### Create Order
+```sh
+curl -X POST http://<MINIKUBE_IP>:<ORDER_MANAGEMENT_NODEPORT>/api/orders \
+  -H 'Content-Type: application/json' \
+  -d '{"userId": 1, "product": "Laptop", "quantity": 2}'
+```
 
 ---
+## Cleanup & Maintenance
+After deployment, unnecessary files are removed via Jenkins pipeline:
+- **Maven target directories**
+- **Ansible temporary files**
+- **Docker build cache**
+- **Kubernetes logs**
 
-## 🚚 **9. Clean Up Resources**
-```bash
-kubectl delete deployment user-management order-management postgres
-kubectl delete service user-management-service order-management-service postgres-service
+To manually clean up:
+```sh
+kubectl delete all --all
+```
+To stop Minikube:
+```sh
 minikube stop
-minikube delete
 ```
 
 ---
-
-## 📈 **10. Summary**
-- **CI/CD Pipeline:** Jenkins automates build and deployment.
-- **Kubernetes:** Applications and PostgreSQL deployed on Minikube.
-- **Ansible Vault:** Ensures security for credentials.
-- **Docker Hub:** Stores and pulls images securely.
-
-🚀 **Happy DevOps Journey!** 🐋🔥
+## Conclusion
+This project provides a complete CI/CD pipeline to deploy two microservices and a PostgreSQL database in Kubernetes using Jenkins, Ansible, and Docker.
 
