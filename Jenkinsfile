@@ -64,7 +64,9 @@ pipeline {
 //                     sh 'kubectl apply -f postgres-deployment.yml'
                     sh 'kubectl apply -f postgres-service.yml'
                     sh 'kubectl apply -f user_management-deployment.yml'
+                    sh 'kubectl apply -f user_management-service.yml'
                     sh 'kubectl apply -f order_management-deployment.yml'
+                    sh 'kubectl apply -f order_management-service.yml'
                 }
             }
         }
