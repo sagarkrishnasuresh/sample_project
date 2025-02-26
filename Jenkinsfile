@@ -61,7 +61,7 @@ pipeline {
         stage('Deploy to Minikube') {
             steps {
                 dir('kubernetes') {
-                    sh 'kubectl apply -f postgres-deployment.yml'
+//                     sh 'kubectl apply -f postgres-deployment.yml'
                     sh 'kubectl apply -f postgres-service.yml'
                     sh 'kubectl apply -f user_management-deployment.yml'
                     sh 'kubectl apply -f order_management-deployment.yml'
