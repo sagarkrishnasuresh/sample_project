@@ -1,27 +1,35 @@
-# Ansible/roles/postgres_setup/tasks/main.yml
 ---
+- name: Authenticate to AWS ECR
+  shell: |
+    echo "{{ AWS_ECR_PASSWORD }}" | docker login --username "{{ AWS_ECR_USERNAME }}" --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
+
+- name: Build and Tag PostgreSQL Docker Image
+  shell: |
+    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest /var/lib/jenkins/workspace/springboot_sample_deployment/postgres
+
+- name: Push PostgreSQL Image to AWS ECR
+  shell: |
+    docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
+
 - name: Generate Kubernetes Secrets for PostgreSQL
   template:
     src: kubernetes-secrets.yml.j2
     dest: /var/lib/jenkins/tmp/kubernetes-secrets.yml
 
-- name: Apply PostgreSQL Secrets in Kubernetes
+- name: Apply PostgreSQL Secrets in AWS EKS
   command: kubectl apply -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
-    MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
-- name: Deploy PostgreSQL in Kubernetes
+- name: Deploy PostgreSQL in AWS EKS
   command: kubectl apply -f /var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-deployment.yml
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
-    MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
-- name: Deploy PostgreSQL Service in Kubernetes
+- name: Deploy PostgreSQL Service in AWS EKS
   command: kubectl apply -f /var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-service.yml
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
-    MINIKUBE_HOME: "/var/lib/jenkins/.minikube"
     PATH: "/usr/local/bin:/usr/bin:/bin"

@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: order-management
-          image: sagarkrishnasuresh/order_management:latest
+          image: "{{`{{AWS_ID}}`}}.dkr.ecr.{{`{{AWS_REGION}}`}}.amazonaws.com/order_management:latest"
           ports:
             - containerPort: 8082
           env:
@@ -33,4 +33,5 @@ spec:
                 secretKeyRef:
                   name: postgres-credentials
                   key: DB_PASSWORD
-
+      imagePullSecrets:
+        - name: aws-ecr-secret

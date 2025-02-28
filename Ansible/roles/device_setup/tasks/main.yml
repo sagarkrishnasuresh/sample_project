@@ -1,64 +1,51 @@
-# Ansible/roles/device_setup/tasks/main.yml
 ---
-- name: Install Docker and dependencies
-  apt:
+- name: Install Required Packages
+  yum:
     name:
-      - docker.io
+      - docker
       - ansible
       - python3-pip
+      - jq
     state: present
     update_cache: yes
+
+- name: Install AWS CLI
+  shell: |
+    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+    unzip awscliv2.zip
+    sudo ./aws/install
+  args:
+    creates: /usr/local/bin/aws
 
 - name: Install Docker SDK for Python
   pip:
     name: docker
 
-- name: Enable Docker service
+- name: Enable and Start Docker Service
   systemd:
     name: docker
     state: started
     enabled: yes
 
-- name: Check if kubectl is already installed
-  stat:
-    path: /usr/local/bin/kubectl
-  register: kubectl_file
-
-- name: Download kubectl binary if not installed
+- name: Install kubectl for EKS
   get_url:
     url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
     mode: '0755'
-  when: not kubectl_file.stat.exists
 
-
-
-
-- name: Verify kubectl installation
+- name: Verify kubectl Installation
   command: kubectl version --client
   register: kubectl_result
   ignore_errors: yes
 
-- name: Display kubectl version
-  debug:
-    msg: "{{ kubectl_result.stdout }}"
+- name: Install eksctl (for managing AWS EKS)
+  get_url:
+    url: "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
+    dest: "/tmp/eksctl.tar.gz"
 
-# ✅ Ensure kubectl is available in Jenkins PATH
-- name: Create symbolic link for kubectl
-  file:
-    src: /usr/local/bin/kubectl
-    dest: /usr/bin/kubectl
-    state: link
-    force: yes
-
-- name: Ensure kubectl is accessible by Jenkins user
-  lineinfile:
-    path: /home/jenkins/.bashrc
-    line: 'export PATH=$PATH:/usr/local/bin'
-    create: yes
-    mode: '0644'
-
-- name: Apply .bashrc changes for Jenkins user
-  command: bash -c "source /home/jenkins/.bashrc"
-  become_user: jenkins
-
+- name: Extract and Move eksctl
+  shell: |
+    tar -xzf /tmp/eksctl.tar.gz -C /usr/local/bin
+    chmod +x /usr/local/bin/eksctl
+  args:
+    creates: /usr/local/bin/eksctl

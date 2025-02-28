@@ -1,12 +1,18 @@
 pipeline {
-    agent any
+    agent {
+        label 'AWS-EC2-Deployment'
+    }
     tools {
         maven 'Maven3'
     }
     environment {
-        KUBECONFIG = '/var/lib/jenkins/.kube/config'
-        MINIKUBE_HOME = '/var/lib/jenkins/.minikube'
-        PATH = '/usr/local/bin:/usr/bin:/bin'
+        AWS_REGION = 'eu-north-1'
+        EKS_CLUSTER_NAME = 'my-cluster'
+        AWS_ACCOUNT_ID = '145023095187'
+        REPO_NAME_USER = 'user_management'
+        REPO_NAME_ORDER = 'order_management'
+        ECR_REPO_USER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/user_management"
+        ECR_REPO_ORDER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/order_management"
     }
     stages {
 
@@ -35,74 +41,76 @@ pipeline {
             }
         }
 
-        stage('Setup Temporary Directory') {
+        stage('Run Ansible Playbook on EC2') {
+            steps {
+                dir('Ansible') {
+                    sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
+                }
+            }
+        }
+
+        stage('Login to AWS ECR') {
             steps {
                 script {
                     sh '''
-                    if [ ! -d "/var/lib/jenkins/tmp" ]; then
-                        mkdir -p /var/lib/jenkins/tmp
-                        echo "Directory /var/lib/jenkins/tmp created."
-                    else
-                        echo "Directory /var/lib/jenkins/tmp already exists."
-                    fi
+                    echo "Logging into AWS ECR..."
+                    aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                     '''
                 }
             }
         }
 
-        stage('Run Ansible Playbook') {
-            steps {
-                dir('Ansible') {
-                    sh 'ansible-playbook complete_deployment.yml'
-                }
-            }
-        }
-
-        stage('Deploy to Minikube') {
-            steps {
-                dir('kubernetes') {
-//                     sh 'kubectl apply -f postgres-deployment.yml'
-                    sh 'kubectl apply -f postgres-service.yml'
-                    sh 'kubectl apply -f user_management-deployment.yml'
-                    sh 'kubectl apply -f user_management-service.yml'
-                    sh 'kubectl apply -f order_management-deployment.yml'
-                    sh 'kubectl apply -f order_management-service.yml'
-                }
-            }
-        }
-        stage('Clearing residuals') {
+        stage('Deploy to AWS EKS') {
             steps {
                 script {
-                    echo '🔄 Clearing non-needed files after deployment...'
+                    echo 'Applying Kubernetes secrets and manifests...'
+                    sh '''
+                    kubectl apply -f kubernetes/kubernetes-secrets.yml
+                    kubectl apply -f kubernetes/postgres-service.yml
+                    kubectl apply -f kubernetes/postgres-deployment.yml
+                    kubectl apply -f kubernetes/user_management-deployment.yml
+                    kubectl apply -f kubernetes/user_management-service.yml
+                    kubectl apply -f kubernetes/order_management-deployment.yml
+                    kubectl apply -f kubernetes/order_management-service.yml
+                    '''
+                }
+            }
+        }
 
-                    // Clear Maven target directories
-                    sh 'rm -rf user_management/target'
-                    sh 'rm -rf order_management/target'
+        stage('Verify Deployment') {
+            steps {
+                script {
+                    echo 'Checking if all pods are running...'
+                    sh '''
+                    kubectl get pods -o wide
+                    kubectl get svc -o wide
+                    '''
+                }
+            }
+        }
 
-                    // // Clear Ansible temporary files
-                    // sh 'rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml'
-                    // sh 'rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml'
-
-                    
-
-                    // Clear Docker build cache
-                    sh 'sudo docker system prune -a -f'
-
-                    // Clear Kubernetes logs (optional)
-                    sh 'rm -rf ~/.kube/cache'
-                    sh 'rm -rf ~/.kube/http-cache'
-
-                    echo '✅ Residual files cleared successfully.'
+        stage('Clearing Residuals') {
+            steps {
+                script {
+                    echo 'Cleaning up unused files...'
+                    sh '''
+                    rm -rf user_management/target
+                    rm -rf order_management/target
+                    rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml
+                    rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
+                    sudo docker system prune -a -f
+                    '''
+                    echo '✅ Cleanup completed successfully.'
                 }
             }
         }
     }
     post {
         success {
-            echo 'Build and deployment completed successfully!'
+            echo '✅ Build and deployment completed successfully on AWS EC2 & EKS!'
         }
         failure {
-            echo 'Build or deployment failed. Check logs for details.'
+            echo '❌ Build or deployment failed. Check logs for details.'
         }
     }
 }

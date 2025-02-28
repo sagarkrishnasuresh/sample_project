@@ -1,21 +1,12 @@
-# Ansible/roles/user_management/tasks/main.yml
 ---
-- name: Login to Docker Hub
-  community.docker.docker_login:
-    username: "{{ dockerhub_username }}"
-    password: "{{ dockerhub_password }}"
-    reauthorize: yes
+- name: Authenticate to AWS ECR
+  shell: |
+    echo "{{ AWS_ECR_PASSWORD }}" | docker login --username "{{ AWS_ECR_USERNAME }}" --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
 
 - name: Build Docker image for user_management
-  community.docker.docker_image:
-    build:
-      path: /var/lib/jenkins/workspace/springboot_sample_deployment/user_management
-    name: "{{ dockerhub_username }}/user_management"
-    tag: latest
-    source: build
+  shell: |
+    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/user_management:latest /var/lib/jenkins/workspace/springboot_sample_deployment/user_management
 
-- name: Push Docker image for user_management
-  community.docker.docker_image:
-    name: "{{ dockerhub_username }}/user_management:latest"
-    push: yes
-    source: local
+- name: Push Docker image for user_management to AWS ECR
+  shell: |
+    docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/user_management:latest
