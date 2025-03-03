@@ -41,10 +41,10 @@ pipeline {
                 script {
                     echo '🔹 Checking if AWS ECR repositories exist...'
                     sh '''
-                    aws ecr describe-repositories --repository-names user_management || \
+                    aws ecr describe-repositories --repository-names user_management --region eu-north-1 || \
                     aws ecr create-repository --repository-name user_management --region eu-north-1
 
-                    aws ecr describe-repositories --repository-names order_management || \
+                    aws ecr describe-repositories --repository-names order_management --region eu-north-1 || \
                     aws ecr create-repository --repository-name order_management --region eu-north-1
                     '''
                 }
