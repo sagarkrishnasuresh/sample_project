@@ -1,11 +1,15 @@
 ---
 - name: Authenticate to AWS ECR
   shell: |
-    echo "{{ AWS_ECR_PASSWORD }}" | docker login --username "{{ AWS_ECR_USERNAME }}" --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
+    aws ecr get-login-password --region {{ AWS_REGION }} | docker login --username AWS --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
+  register: ecr_login
+  changed_when: "'Login Succeeded' in ecr_login.stdout"
 
 - name: Build Docker image for order_management
   shell: |
-    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/order_management:latest /var/lib/jenkins/workspace/springboot_sample_deployment/order_management
+    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/order_management:latest .
+  args:
+    chdir: /var/lib/jenkins/workspace/springboot_sample_deployment/order_management
 
 - name: Push Docker image for order_management to AWS ECR
   shell: |
