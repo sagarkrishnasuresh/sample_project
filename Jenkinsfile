@@ -12,9 +12,16 @@ pipeline {
 
         stage('Clone Repository') {
             steps {
-                git url: 'https://github.com/sagarkrishnasuresh/sample_project.git', branch: 'main'
+                script {
+                    echo '🧹 Cleaning old workspace...'
+                    deleteDir()  // This removes any old files
+
+                    echo '🔹 Cloning the latest repository...'
+                    git url: 'https://github.com/sagarkrishnasuresh/sample_project.git', branch: 'main'
+                }
             }
         }
+
 
         stage('Build JAR Files') {
             parallel {
