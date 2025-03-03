@@ -9,13 +9,16 @@
     state: present
     update_cache: yes
 
-- name: Install AWS CLI
+- name: Install AWS CLI (if not installed)
   shell: |
-    curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-    unzip awscliv2.zip
-    sudo ./aws/install
+    if ! command -v aws &> /dev/null; then
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      sudo ./aws/install
+      rm -rf awscliv2.zip aws
+    fi
   args:
-    creates: /usr/local/bin/aws
+    executable: /bin/bash
 
 - name: Install Docker SDK for Python
   pip:
@@ -27,25 +30,41 @@
     state: started
     enabled: yes
 
-- name: Install kubectl for EKS
+- name: Check if kubectl is Installed
+  stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_file
+
+- name: Install kubectl (if not installed)
   get_url:
     url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
     dest: /usr/local/bin/kubectl
     mode: '0755'
+  when: not kubectl_file.stat.exists
 
 - name: Verify kubectl Installation
   command: kubectl version --client
   register: kubectl_result
   ignore_errors: yes
 
-- name: Install eksctl (for managing AWS EKS)
-  get_url:
-    url: "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz"
-    dest: "/tmp/eksctl.tar.gz"
+- name: Create Symlink for kubectl (if missing)
+  file:
+    src: /usr/local/bin/kubectl
+    dest: /usr/bin/kubectl
+    state: link
+    force: yes
 
-- name: Extract and Move eksctl
+- name: Check if eksctl is Installed
+  stat:
+    path: /usr/local/bin/eksctl
+  register: eksctl_file
+
+- name: Download and Install eksctl (if not installed)
   shell: |
-    tar -xzf /tmp/eksctl.tar.gz -C /usr/local/bin
+    curl -sL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" -o /tmp/eksctl.tar.gz
+    tar -xzf /tmp/eksctl.tar.gz -C /tmp
+    mv /tmp/eksctl /usr/local/bin/
     chmod +x /usr/local/bin/eksctl
   args:
-    creates: /usr/local/bin/eksctl
+    executable: /bin/bash
+  when: not eksctl_file.stat.exists
