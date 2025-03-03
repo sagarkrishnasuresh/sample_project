@@ -26,6 +26,7 @@
   shell: |
     docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest .
   args:
+    mkdir: "{{ playbook_dir }}/roles/postgres_setup/files"
     chdir: "{{ playbook_dir }}/roles/postgres_setup/files"
 
 - name: Push PostgreSQL Image to AWS ECR
