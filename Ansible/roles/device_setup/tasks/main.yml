@@ -1,5 +1,16 @@
 ---
-- name: Install Required Packages
+- name: Install Required Packages (Ubuntu)
+  apt:
+    name:
+      - docker.io
+      - ansible
+      - python3-pip
+      - jq
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Required Packages (RHEL/CentOS)
   yum:
     name:
       - docker
@@ -8,6 +19,8 @@
       - jq
     state: present
     update_cache: yes
+  when: ansible_os_family == "RedHat"
+
 
 - name: Install AWS CLI (if not installed)
   shell: |
