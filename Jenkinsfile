@@ -6,7 +6,7 @@ pipeline {
     environment {
         AWS_REGION = 'eu-north-1'
         EKS_CLUSTER_NAME = 'my-cluster'
-        AWS_ACCOUNT_ID = '145023095187"
+        AWS_ACCOUNT_ID = '145023095187'
     }
     stages {
 
