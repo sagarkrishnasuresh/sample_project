@@ -34,6 +34,33 @@ pipeline {
                 }
             }
         }
+        stage('Ensure ECR Repositories Exist') {
+                    steps {
+                        script {
+                            echo '🔹 Checking if AWS ECR repositories exist...'
+                            withCredentials([[
+                                $class: 'AmazonWebServicesCredentialsBinding',
+                                credentialsId: 'aws-credentials',
+                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                            ]]) {
+                                sh '''
+                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+                                aws ecr describe-repositories --repository-names user_management --region $AWS_REGION || \
+                                aws ecr create-repository --repository-name user_management --region $AWS_REGION
+
+                                aws ecr describe-repositories --repository-names order_management --region $AWS_REGION || \
+                                aws ecr create-repository --repository-name order_management --region $AWS_REGION
+
+                                aws ecr describe-repositories --repository-names postgres --region $AWS_REGION || \
+                                aws ecr create-repository --repository-name postgres --region $AWS_REGION
+                                '''
+                            }
+                        }
+                    }
+                }
 
         stage('Run Ansible Playbook on EC2') {
             steps {
