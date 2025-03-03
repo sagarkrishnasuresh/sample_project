@@ -36,20 +36,6 @@ pipeline {
                 }
             }
         }
-        stage('Ensure ECR Repositories Exist') {
-            steps {
-                script {
-                    echo '🔹 Checking if AWS ECR repositories exist...'
-                    sh '''
-                    aws ecr describe-repositories --repository-names user_management --region eu-north-1 || \
-                    aws ecr create-repository --repository-name user_management --region eu-north-1
-
-                    aws ecr describe-repositories --repository-names order_management --region eu-north-1 || \
-                    aws ecr create-repository --repository-name order_management --region eu-north-1
-                    '''
-                }
-            }
-        }
 
 
         stage('Login to AWS ECR') {
@@ -67,9 +53,20 @@ pipeline {
                 }
             }
         }
+        stage('Ensure ECR Repositories Exist') {
+                    steps {
+                        script {
+                            echo '🔹 Checking if AWS ECR repositories exist...'
+                            sh '''
+                            aws ecr describe-repositories --repository-names user_management --region eu-north-1 || \
+                            aws ecr create-repository --repository-name user_management --region eu-north-1
 
-
-
+                            aws ecr describe-repositories --repository-names order_management --region eu-north-1 || \
+                            aws ecr create-repository --repository-name order_management --region eu-north-1
+                            '''
+                        }
+                    }
+                }
         stage('Build & Push Docker Images') {
             parallel {
                 stage('Build & Push User Management') {
