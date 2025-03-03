@@ -35,7 +35,7 @@
     docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
 
 - name: Deploy PostgreSQL in AWS EKS
-  command: kubectl apply -f "{{ playbook_dir }}/roles/postgres_setup/files/postgres-deployment.yml"
+  command: kubectl apply -f "/var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-deployment.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
