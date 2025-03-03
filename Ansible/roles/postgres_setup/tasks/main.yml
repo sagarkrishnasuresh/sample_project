@@ -1,35 +1,39 @@
 ---
 - name: Authenticate to AWS ECR
   shell: |
-    echo "{{ AWS_ECR_PASSWORD }}" | docker login --username "{{ AWS_ECR_USERNAME }}" --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
+    aws ecr get-login-password --region {{ AWS_REGION }} | docker login --username AWS --password-stdin {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com
+  register: ecr_login
+  changed_when: "'Login Succeeded' in ecr_login.stdout"
+
+- name: Generate Kubernetes Secrets for PostgreSQL
+  template:
+    src: kubernetes-secrets.yml.j2
+    dest: /tmp/kubernetes-secrets.yml
+
+- name: Apply PostgreSQL Secrets in AWS EKS
+  command: kubectl apply -f /tmp/kubernetes-secrets.yml
+  environment:
+    KUBECONFIG: "/var/lib/jenkins/.kube/config"
+    PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Build and Tag PostgreSQL Docker Image
   shell: |
-    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest /var/lib/jenkins/workspace/springboot_sample_deployment/postgres
+    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest .
+  args:
+    chdir: "{{ playbook_dir }}/roles/postgres_setup/files"
 
 - name: Push PostgreSQL Image to AWS ECR
   shell: |
     docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
 
-- name: Generate Kubernetes Secrets for PostgreSQL
-  template:
-    src: kubernetes-secrets.yml.j2
-    dest: /var/lib/jenkins/tmp/kubernetes-secrets.yml
-
-- name: Apply PostgreSQL Secrets in AWS EKS
-  command: kubectl apply -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
-  environment:
-    KUBECONFIG: "/var/lib/jenkins/.kube/config"
-    PATH: "/usr/local/bin:/usr/bin:/bin"
-
 - name: Deploy PostgreSQL in AWS EKS
-  command: kubectl apply -f /var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-deployment.yml
+  command: kubectl apply -f "{{ playbook_dir }}/roles/postgres_setup/files/postgres-deployment.yml"
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in AWS EKS
-  command: kubectl apply -f /var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-service.yml
+  command: kubectl apply -f "{{ playbook_dir }}/roles/postgres_setup/files/postgres-service.yml"
   environment:
     KUBECONFIG: "/var/lib/jenkins/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
