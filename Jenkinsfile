@@ -10,8 +10,11 @@ pipeline {
     }
     stages {
 
-
-
+        stage('Clone Repository') {
+            steps {
+                git url: 'https://github.com/sagarkrishnasuresh/sample_project.git', branch: 'main'
+            }
+        }
 
         stage('Build JAR Files') {
             parallel {
