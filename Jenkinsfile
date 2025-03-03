@@ -6,9 +6,7 @@ pipeline {
     environment {
         AWS_REGION = 'eu-north-1'
         EKS_CLUSTER_NAME = 'my-cluster'
-        AWS_ACCOUNT_ID = '145023095187'
-        REPO_NAME_USER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/user_management"
-        REPO_NAME_ORDER = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/order_management"
+        AWS_ACCOUNT_ID = '145023095187"
     }
     stages {
 
@@ -37,68 +35,12 @@ pipeline {
             }
         }
 
-        stage('Login to AWS ECR') {
+        stage('Run Ansible Playbook on EC2') {
             steps {
                 script {
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        echo "✅ Logging into AWS ECR..."
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
-                        '''
-                    }
-                }
-            }
-        }
-
-        stage('Ensure ECR Repositories Exist') {
-            steps {
-                script {
-                    echo '🔹 Checking if AWS ECR repositories exist...'
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-                        aws ecr describe-repositories --repository-names user_management --region $AWS_REGION || \
-                        aws ecr create-repository --repository-name user_management --region $AWS_REGION
-
-                        aws ecr describe-repositories --repository-names order_management --region $AWS_REGION || \
-                        aws ecr create-repository --repository-name order_management --region $AWS_REGION
-                        '''
-                    }
-                }
-            }
-        }
-
-
-        stage('Build & Push Docker Images') {
-            parallel {
-                stage('Build & Push User Management') {
-                    steps {
-                        sh '''
-                        docker build --no-cache -t $REPO_NAME_USER:latest ./user_management
-                        docker push $REPO_NAME_USER:latest
-                        '''
-                    }
-                }
-                stage('Build & Push Order Management') {
-                    steps {
-                        sh '''
-                        docker build --no-cache -t $REPO_NAME_ORDER:latest ./order_management
-                        docker push $REPO_NAME_ORDER:latest
-                        '''
+                    echo '🔹 Running Ansible Playbook to handle Docker build & push...'
+                    dir('Ansible') {
+                        sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
                     }
                 }
             }
