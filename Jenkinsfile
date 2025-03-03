@@ -38,7 +38,7 @@ pipeline {
         stage('Run Ansible Playbook on EC2') {
             steps {
                 script {
-                    echo '🔹 Running Ansible Playbook to handle Docker build & push...'
+                    echo '🔹 Running Ansible Playbook to handle Docker build & push, and PostgreSQL setup...'
                     dir('Ansible') {
                         sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
                     }
@@ -50,9 +50,7 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Applying AWS ECR Kubernetes Secret...'
-                    sh '''
-                    kubectl apply -f kubernetes/aws-ecr-secret.yml
-                    '''
+                    sh 'kubectl apply -f kubernetes/aws-ecr-secret.yml'
                 }
             }
         }
@@ -61,21 +59,17 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Verifying EKS cluster is active...'
-                    sh '''
-                    aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"
-                    '''
+                    sh 'aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"'
                 }
             }
         }
 
-        stage('Apply Kubernetes Secrets & Deploy') {
+        stage('Apply Kubernetes Secrets & Deploy Applications') {
             steps {
                 script {
-                    echo '🔹 Deploying application manifests to AWS EKS...'
+                    echo '🔹 Deploying user and order management apps to AWS EKS...'
                     sh '''
                     kubectl apply -f kubernetes/kubernetes-secrets.yml
-                    kubectl apply -f kubernetes/postgres-deployment.yml
-                    kubectl apply -f kubernetes/postgres-service.yml
                     kubectl apply -f kubernetes/user_management-deployment.yml
                     kubectl apply -f kubernetes/user_management-service.yml
                     kubectl apply -f kubernetes/order_management-deployment.yml
@@ -103,7 +97,6 @@ pipeline {
                     echo '🧹 Cleaning up unnecessary files...'
                     sh '''
                     rm -rf user_management/target order_management/target
-                    rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml
                     rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
                     sudo docker system prune -a -f
                     '''
