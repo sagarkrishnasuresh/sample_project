@@ -1,6 +1,6 @@
 ---
 - name: Complete Deployment Process
-  hosts: localhost
+  hosts: aws
   become: yes
   gather_facts: yes
 
