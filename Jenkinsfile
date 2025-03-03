@@ -62,13 +62,14 @@ pipeline {
                 script {
                     echo '🔹 Checking if AWS ECR repositories exist...'
                     sh '''
-                    set -e
-                    if ! aws ecr describe-repositories --repository-names user_management --region $AWS_REGION >/dev/null 2>&1; then
-                        aws ecr create-repository --repository-name user_management --region $AWS_REGION
-                    fi
-                    if ! aws ecr describe-repositories --repository-names order_management --region $AWS_REGION >/dev/null 2>&1; then
-                        aws ecr create-repository --repository-name order_management --region $AWS_REGION
-                    fi
+                    export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                    export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+                    aws ecr describe-repositories --repository-names user_management --region $AWS_REGION || \
+                    aws ecr create-repository --repository-name user_management --region $AWS_REGION
+
+                    aws ecr describe-repositories --repository-names order_management --region $AWS_REGION || \
+                    aws ecr create-repository --repository-name order_management --region $AWS_REGION
                     '''
                 }
             }
