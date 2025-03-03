@@ -22,12 +22,18 @@
     KUBECONFIG: "/home/ec2-user/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
-- name: Build and Tag PostgreSQL Docker Image
+- name: Pull Official PostgreSQL Image
   shell: |
-    docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest .
-  args:
-    mkdir: "{{ playbook_dir }}/roles/postgres_setup/files"
-    chdir: "{{ playbook_dir }}/roles/postgres_setup/files"
+    docker pull postgres:latest
+
+- name: Tag PostgreSQL Image for AWS ECR
+  shell: |
+    docker tag postgres:latest {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
+
+- name: Push PostgreSQL Image to AWS ECR
+  shell: |
+    docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
+
 
 - name: Push PostgreSQL Image to AWS ECR
   shell: |
