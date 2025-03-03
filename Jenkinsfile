@@ -37,42 +37,49 @@ pipeline {
             }
         }
 
-
         stage('Login to AWS ECR') {
             steps {
                 script {
-                    withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', credentialsId: 'aws-credentials']]) {
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
                         sh '''
+                        echo "✅ Logging into AWS ECR..."
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        export AWS_SESSION_TOKEN=$AWS_SESSION_TOKEN
-
                         aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
                         '''
                     }
                 }
             }
         }
-        stage('Ensure ECR Repositories Exist') {
-                    steps {
-                        script {
-                            echo '🔹 Checking if AWS ECR repositories exist...'
-                            sh '''
-                            aws ecr describe-repositories --repository-names user_management --region eu-north-1 || \
-                            aws ecr create-repository --repository-name user_management --region eu-north-1
 
-                            aws ecr describe-repositories --repository-names order_management --region eu-north-1 || \
-                            aws ecr create-repository --repository-name order_management --region eu-north-1
-                            '''
-                        }
-                    }
+        stage('Ensure ECR Repositories Exist') {
+            steps {
+                script {
+                    echo '🔹 Checking if AWS ECR repositories exist...'
+                    sh '''
+                    set -e
+                    if ! aws ecr describe-repositories --repository-names user_management --region $AWS_REGION >/dev/null 2>&1; then
+                        aws ecr create-repository --repository-name user_management --region $AWS_REGION
+                    fi
+                    if ! aws ecr describe-repositories --repository-names order_management --region $AWS_REGION >/dev/null 2>&1; then
+                        aws ecr create-repository --repository-name order_management --region $AWS_REGION
+                    fi
+                    '''
                 }
+            }
+        }
+
         stage('Build & Push Docker Images') {
             parallel {
                 stage('Build & Push User Management') {
                     steps {
                         sh '''
-                        docker build -t $REPO_NAME_USER:latest ./user_management
+                        docker build --no-cache -t $REPO_NAME_USER:latest ./user_management
                         docker push $REPO_NAME_USER:latest
                         '''
                     }
@@ -80,7 +87,7 @@ pipeline {
                 stage('Build & Push Order Management') {
                     steps {
                         sh '''
-                        docker build -t $REPO_NAME_ORDER:latest ./order_management
+                        docker build --no-cache -t $REPO_NAME_ORDER:latest ./order_management
                         docker push $REPO_NAME_ORDER:latest
                         '''
                     }
@@ -88,10 +95,24 @@ pipeline {
             }
         }
 
-        stage('Run Ansible Playbook on EC2') {
+        stage('Apply AWS ECR Secret in Kubernetes') {
             steps {
-                dir('Ansible') {
-                    sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
+                script {
+                    echo '🔹 Applying AWS ECR Kubernetes Secret...'
+                    sh '''
+                    kubectl apply -f kubernetes/aws-ecr-secret.yml
+                    '''
+                }
+            }
+        }
+
+        stage('Verify AWS EKS Cluster') {
+            steps {
+                script {
+                    echo '🔹 Verifying EKS cluster is active...'
+                    sh '''
+                    aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"
+                    '''
                 }
             }
         }
@@ -99,9 +120,8 @@ pipeline {
         stage('Apply Kubernetes Secrets & Deploy') {
             steps {
                 script {
-                    echo 'Applying Kubernetes secrets and manifests...'
+                    echo '🔹 Deploying application manifests to AWS EKS...'
                     sh '''
-                    kubectl apply -f kubernetes/aws-ecr-secret.yml
                     kubectl apply -f kubernetes/kubernetes-secrets.yml
                     kubectl apply -f kubernetes/postgres-deployment.yml
                     kubectl apply -f kubernetes/postgres-service.yml
@@ -117,7 +137,7 @@ pipeline {
         stage('Verify Deployment') {
             steps {
                 script {
-                    echo 'Checking if all pods and services are running...'
+                    echo '🔹 Checking if all pods and services are running...'
                     sh '''
                     kubectl get pods -o wide
                     kubectl get svc -o wide
@@ -129,7 +149,7 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    echo 'Cleaning up unnecessary files...'
+                    echo '🧹 Cleaning up unnecessary files...'
                     sh '''
                     rm -rf user_management/target order_management/target
                     rm -f Ansible/roles/postgres_setup/templates/kubernetes-secrets.yml
