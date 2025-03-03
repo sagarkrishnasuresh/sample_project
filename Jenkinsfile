@@ -36,6 +36,21 @@ pipeline {
                 }
             }
         }
+        stage('Ensure ECR Repositories Exist') {
+            steps {
+                script {
+                    echo '🔹 Checking if AWS ECR repositories exist...'
+                    sh '''
+                    aws ecr describe-repositories --repository-names user_management || \
+                    aws ecr create-repository --repository-name user_management
+
+                    aws ecr describe-repositories --repository-names order_management || \
+                    aws ecr create-repository --repository-name order_management
+                    '''
+                }
+            }
+        }
+
 
         stage('Login to AWS ECR') {
             steps {
