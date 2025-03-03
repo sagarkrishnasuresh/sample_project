@@ -11,7 +11,7 @@
   when: ansible_os_family == "Debian"
 
 - name: Install Required Packages (RHEL/CentOS)
-  yum:
+  dnf:
     name:
       - docker
       - ansible
@@ -20,6 +20,7 @@
     state: present
     update_cache: yes
   when: ansible_os_family == "RedHat"
+
 
 
 - name: Install AWS CLI (if not installed)
