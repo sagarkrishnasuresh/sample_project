@@ -43,7 +43,7 @@
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in AWS EKS
-  command: kubectl apply -f "~/workspace/springboot_sample_deployment/kubernetes/postgres-service.yml"
+  command: kubectl apply -f "/var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-service.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
