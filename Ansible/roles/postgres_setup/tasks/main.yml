@@ -17,6 +17,8 @@
 - name: Apply PostgreSQL Secrets in AWS EKS
   command: kubectl apply -f /tmp/kubernetes-secrets.yml
   environment:
+    AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
+    AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
     KUBECONFIG: "/home/ec2-user/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
@@ -33,11 +35,15 @@
 - name: Deploy PostgreSQL in AWS EKS
   command: kubectl apply -f "{{ playbook_dir }}/roles/postgres_setup/files/postgres-deployment.yml"
   environment:
-    KUBECONFIG: "/var/lib/jenkins/.kube/config"
+    AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
+    AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
+    KUBECONFIG: "/home/ec2-user/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in AWS EKS
   command: kubectl apply -f "{{ playbook_dir }}/roles/postgres_setup/files/postgres-service.yml"
   environment:
-    KUBECONFIG: "/var/lib/jenkins/.kube/config"
+    AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
+    AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
+    KUBECONFIG: "/home/ec2-user/.kube/config"
     PATH: "/usr/local/bin:/usr/bin:/bin"
