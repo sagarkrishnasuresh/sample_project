@@ -77,7 +77,7 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Applying AWS ECR Kubernetes Secret...'
-                    sh 'kubectl apply -f kubernetes/aws-ecr-secret.yml'
+                    sh 'kubectl apply -f /home/ec2-user/kubernetes/aws-ecr-secret.yml'
                 }
             }
         }
@@ -96,11 +96,11 @@ pipeline {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS...'
                     sh '''
-                    kubectl apply -f kubernetes/kubernetes-secrets.yml
-                    kubectl apply -f kubernetes/user_management-deployment.yml
-                    kubectl apply -f kubernetes/user_management-service.yml
-                    kubectl apply -f kubernetes/order_management-deployment.yml
-                    kubectl apply -f kubernetes/order_management-service.yml
+                    kubectl apply -f /home/ec2-user/kubernetes/kubernetes-secrets.yml
+                    kubectl apply -f /home/ec2-user/kubernetes/user_management-deployment.yml
+                    kubectl apply -f /home/ec2-user/kubernetes/user_management-service.yml
+                    kubectl apply -f /home/ec2-user/kubernetes/order_management-deployment.yml
+                    kubectl apply -f /home/ec2-user/kubernetes/order_management-service.yml
                     '''
                 }
             }
@@ -121,17 +121,31 @@ pipeline {
         stage('Cleanup') {
             steps {
                 script {
-                    echo '🧹 Cleaning up unnecessary files...'
+                    echo '🧹 Cleaning up unnecessary files on Jenkins and EC2...'
+
+                    // Cleanup on Jenkins
                     sh '''
                     rm -rf user_management/target order_management/target
                     rm -f /var/lib/jenkins/tmp/kubernetes-secrets.yml
                     sudo docker system prune -a -f
                     '''
-                    echo '✅ Cleanup completed successfully.'
+
+                    // Cleanup on EC2
+                    echo '🧹 Cleaning up files on EC2 instance...'
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
+                        sudo rm -rf /home/ec2-user/kubernetes/
+                        sudo docker system prune -a -f
+                        sudo rm -f /tmp/kubernetes-secrets.yml
+                        sudo rm -rf /var/lib/docker/containers/*
+                    EOF
+                    '''
+
+                    echo '✅ Cleanup completed successfully on Jenkins & EC2.'
                 }
             }
         }
-    }
+
     post {
         success {
             echo '✅ Build and deployment completed successfully on AWS EKS!'

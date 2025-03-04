@@ -34,8 +34,24 @@
   shell: |
     docker push {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest
 
+- name: Ensure Kubernetes directory exists on EC2
+  file:
+    path: /home/ec2-user/kubernetes
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+
+- name: Copy Kubernetes manifests to EC2
+  copy:
+    src: "{{ playbook_dir }}/../kubernetes/"
+    dest: /home/ec2-user/kubernetes
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
 - name: Deploy PostgreSQL in AWS EKS
-  command: kubectl apply -f "/var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-deployment.yml"
+  command: kubectl apply -f "/home/ec2-user/kubernetes/postgres-deployment.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
@@ -43,7 +59,7 @@
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in AWS EKS
-  command: kubectl apply -f "/var/lib/jenkins/workspace/springboot_sample_deployment/kubernetes/postgres-service.yml"
+  command: kubectl apply -f "/home/ec2-user/kubernetes/postgres-service.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
