@@ -145,7 +145,7 @@ pipeline {
                 }
             }
         }
-
+    }
     post {
         success {
             echo '✅ Build and deployment completed successfully on AWS EKS!'
