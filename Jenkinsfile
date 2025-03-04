@@ -77,7 +77,19 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Applying AWS ECR Kubernetes Secret...'
-                    sh 'kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml'
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml
+                        '''
+                    }
                 }
             }
         }
@@ -86,7 +98,19 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Verifying EKS cluster is active...'
-                    sh 'aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"'
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+                        aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"
+                        '''
+                    }
                 }
             }
         }
@@ -95,13 +119,23 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS...'
-                    sh '''
-                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml
-                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml
-                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml
-                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml
-                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml
-                    '''
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml
+                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml
+                        '''
+                    }
                 }
             }
         }
@@ -110,13 +144,24 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Checking if all pods and services are running...'
-                    sh '''
-                    kubectl get pods -o wide
-                    kubectl get svc -o wide
-                    '''
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+                        kubectl get pods -o wide
+                        kubectl get svc -o wide
+                        '''
+                    }
                 }
             }
         }
+
 
         stage('Cleanup') {
             steps {
