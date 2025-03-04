@@ -128,7 +128,7 @@ pipeline {
                         sh '''
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
                         kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml
                         kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml
                         kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml
@@ -153,7 +153,7 @@ pipeline {
                         sh '''
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
+
                         kubectl get pods -o wide
                         kubectl get svc -o wide
                         '''
