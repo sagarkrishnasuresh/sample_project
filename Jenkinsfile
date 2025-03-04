@@ -1,5 +1,8 @@
 pipeline {
     agent any
+    options {
+            restartFromStage()  // Enables restart from a failed stage
+        }
     tools {
         maven 'Maven3'
     }
