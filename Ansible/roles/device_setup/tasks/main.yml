@@ -94,13 +94,13 @@
     group: ec2-user
     mode: '0755'
   with_items:
-    - /home/ec2-user/sprinboot_sample_deployment/order_management/target
-    - /home/ec2-user/sprinboot_sample_deployment/user_management/target
+    - /home/ec2-user/springboot_sample_deployment/order_management/target
+    - /home/ec2-user/springboot_sample_deployment/user_management/target
 
 
 - name: Ensure Kubernetes directory exists on EC2
   file:
-    path: /home/ec2-user/sprinboot_sample_deployment/kubernetes
+    path: /home/ec2-user/springboot_sample_deployment/kubernetes
     state: directory
     owner: ec2-user
     group: ec2-user
@@ -109,7 +109,7 @@
 - name: Copy Kubernetes manifests to EC2
   copy:
     src: "{{ playbook_dir }}/../kubernetes/"
-    dest: /home/ec2-user/sprinboot_sample_deployment/kubernetes
+    dest: /home/ec2-user/springboot_sample_deployment/kubernetes
     owner: ec2-user
     group: ec2-user
     mode: '0644'
@@ -117,7 +117,7 @@
 - name: Copy Dockerfiles to EC2
   copy:
     src: "{{ playbook_dir }}/../order_management/Dockerfile"
-    dest: "/home/ec2-user/sprinboot_sample_deployment/order_management/Dockerfile"
+    dest: "/home/ec2-user/springboot_sample_deployment/order_management/Dockerfile"
     owner: ec2-user
     group: ec2-user
     mode: '0644'
@@ -125,7 +125,7 @@
 - name: Copy JAR file for order_management to EC2
   copy:
     src: "{{ playbook_dir }}/../order_management/target/order-service-0.0.1-SNAPSHOT.jar"
-    dest: "/home/ec2-user/sprinboot_sample_deployment/order_management/target"
+    dest: "/home/ec2-user/springboot_sample_deployment/order_management/target"
     owner: ec2-user
     group: ec2-user
     mode: '0644'
@@ -133,7 +133,7 @@
 - name: Copy Dockerfile for user_management to EC2
   copy:
     src: "{{ playbook_dir }}/../user_management/Dockerfile"
-    dest: "/home/ec2-user/sprinboot_sample_deployment/user_management/Dockerfile"
+    dest: "/home/ec2-user/springboot_sample_deployment/user_management/Dockerfile"
     owner: ec2-user
     group: ec2-user
     mode: '0644'
@@ -141,7 +141,7 @@
 - name: Copy JAR file for user_management to EC2
   copy:
     src: "{{ playbook_dir }}/../user_management/target/dockertrials-0.0.1-SNAPSHOT.jar"
-    dest: "/home/ec2-user/sprinboot_sample_deployment/user_management/target"
+    dest: "/home/ec2-user/springboot_sample_deployment/user_management/target"
     owner: ec2-user
     group: ec2-user
     mode: '0644'

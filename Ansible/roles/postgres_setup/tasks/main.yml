@@ -36,7 +36,7 @@
 
 
 - name: Deploy PostgreSQL in AWS EKS
-  command: kubectl apply -f "/home/ec2-user/sprinboot_sample_deployment/kubernetes/postgres-deployment.yml"
+  command: kubectl apply -f "/home/ec2-user/springboot_sample_deployment/kubernetes/postgres-deployment.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
@@ -44,7 +44,7 @@
     PATH: "/usr/local/bin:/usr/bin:/bin"
 
 - name: Deploy PostgreSQL Service in AWS EKS
-  command: kubectl apply -f "/home/ec2-user/sprinboot_sample_deployment/kubernetes/postgres-service.yml"
+  command: kubectl apply -f "/home/ec2-user/springboot_sample_deployment/kubernetes/postgres-service.yml"
   environment:
     AWS_ACCESS_KEY_ID: "{{ AWS_ACCESS_KEY_ID }}"
     AWS_SECRET_ACCESS_KEY: "{{ AWS_SECRET_ACCESS_KEY }}"
