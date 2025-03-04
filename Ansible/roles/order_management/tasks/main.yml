@@ -12,7 +12,7 @@
   shell: |
     docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/order_management:latest .
   args:
-    chdir: /var/lib/jenkins/workspace/springboot_sample_deployment/order_management
+    chdir: /home/ec2-user/springboot_sample_deployment/order_management
 
 - name: Push Docker image for order_management to AWS ECR
   shell: |

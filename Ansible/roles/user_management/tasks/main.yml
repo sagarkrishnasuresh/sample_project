@@ -12,7 +12,7 @@
   shell: |
     docker build -t {{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/user_management:latest .
   args:
-    chdir: /var/lib/jenkins/workspace/springboot_sample_deployment/user_management
+    chdir: /home/ec2-user/springboot_sample_deployment/user_management
 
 - name: Push Docker image for user_management to AWS ECR
   shell: |

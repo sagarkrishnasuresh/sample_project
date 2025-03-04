@@ -77,7 +77,7 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Applying AWS ECR Kubernetes Secret...'
-                    sh 'kubectl apply -f /home/ec2-user/kubernetes/aws-ecr-secret.yml'
+                    sh 'kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/aws-ecr-secret.yml'
                 }
             }
         }
@@ -96,11 +96,11 @@ pipeline {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS...'
                     sh '''
-                    kubectl apply -f /home/ec2-user/kubernetes/kubernetes-secrets.yml
-                    kubectl apply -f /home/ec2-user/kubernetes/user_management-deployment.yml
-                    kubectl apply -f /home/ec2-user/kubernetes/user_management-service.yml
-                    kubectl apply -f /home/ec2-user/kubernetes/order_management-deployment.yml
-                    kubectl apply -f /home/ec2-user/kubernetes/order_management-service.yml
+                    kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/kubernetes-secrets.yml
+                    kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/user_management-deployment.yml
+                    kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/user_management-service.yml
+                    kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/order_management-deployment.yml
+                    kubectl apply -f /home/ec2-user/sprinboot_sample_deployment/kubernetes/order_management-service.yml
                     '''
                 }
             }

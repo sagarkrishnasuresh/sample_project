@@ -85,3 +85,65 @@
   args:
     executable: /bin/bash
   when: not eksctl_file.stat.exists
+
+- name: Ensure Kubernetes directory exists on EC2
+  file:
+    path: /home/ec2-user/sprinboot_sample_project/kubernetes
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+
+- name: Copy Kubernetes manifests to EC2
+  copy:
+    src: "{{ playbook_dir }}/../kubernetes/"
+    dest: /home/ec2-user/sprinboot_sample_project/kubernetes
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+- name: Ensure required directories exist on EC2
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+  with_items:
+    - /home/ec2-user/sprinboot_sample_deployment/order_management
+    - /home/ec2-user/sprinboot_sample_deployment/user_management
+
+- name: Copy Dockerfiles to EC2
+  copy:
+    src: "{{ playbook_dir }}/../order_management/Dockerfile"
+    dest: "/home/ec2-user/sprinboot_sample_deployment/order_management/Dockerfile"
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+- name: Copy JAR file for order_management to EC2
+  copy:
+    src: "{{ playbook_dir }}/../order_management/target/*.jar"
+    dest: "/home/ec2-user/sprinboot_sample_deployment/order_management/"
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+- name: Copy Dockerfile for user_management to EC2
+  copy:
+    src: "{{ playbook_dir }}/../user_management/Dockerfile"
+    dest: "/home/ec2-user/sprinboot_sample_deployment/user_management/Dockerfile"
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+- name: Copy JAR file for user_management to EC2
+  copy:
+    src: "{{ playbook_dir }}/../user_management/target/*.jar"
+    dest: "/home/ec2-user/sprinboot_sample_deployment/user_management/"
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+
+
