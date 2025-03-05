@@ -7,7 +7,6 @@ pipeline {
         AWS_REGION = 'eu-north-1'
         EKS_CLUSTER_NAME = 'my-cluster'
         AWS_ACCOUNT_ID = '145023095187'
-        KUBECONFIG_PATH = "/home/ec2-user/.kube/config"  // Use absolute path to kubeconfig
     }
     stages {
 
@@ -75,41 +74,27 @@ pipeline {
 //             }
 //         }
 
-        stage('Setup AWS EKS Kubeconfig') {
+        stage('Setup AWS EKS Kubeconfig on EC2') {
             steps {
                 script {
                     echo '🔹 Configuring Kubernetes access for AWS EKS on EC2...'
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-
-                        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
-                        "echo '✅ Using existing kubeconfig for AWS EKS...' && \
-                         export KUBECONFIG=/home/ec2-user/.kube/config && \
-                         kubectl config current-context"
-                        '''
-                    }
+                    sh '''
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    "aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --kubeconfig /home/ec2-user/.kube/config && \
+                     echo '✅ Using existing kubeconfig for AWS EKS' && \
+                     kubectl config current-context --kubeconfig /home/ec2-user/.kube/config"
+                    '''
                 }
             }
         }
-
-
-
 
         stage('Apply AWS ECR Secret in Kubernetes') {
             steps {
                 script {
                     echo '🔹 Applying AWS ECR Kubernetes Secret on EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml --kubeconfig /home/ec2-user/.kube/config
-                    EOF
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    "kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml --kubeconfig /home/ec2-user/.kube/config"
                     '''
                 }
             }
@@ -120,13 +105,12 @@ pipeline {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS from EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml --kubeconfig /home/ec2-user/.kube/config
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml --kubeconfig /home/ec2-user/.kube/config
-                    EOF
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    "kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml --kubeconfig /home/ec2-user/.kube/config && \
+                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
+                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config && \
+                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
+                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml --kubeconfig /home/ec2-user/.kube/config"
                     '''
                 }
             }
@@ -137,15 +121,13 @@ pipeline {
                 script {
                     echo '🔹 Checking if all pods and services are running on EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
-                        kubectl get pods -o wide --kubeconfig /home/ec2-user/.kube/config
-                        kubectl get svc -o wide --kubeconfig /home/ec2-user/.kube/config
-                    EOF
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    "kubectl get pods -o wide --kubeconfig /home/ec2-user/.kube/config && \
+                     kubectl get svc -o wide --kubeconfig /home/ec2-user/.kube/config"
                     '''
                 }
             }
         }
-
 
         stage('Cleanup') {
             steps {
@@ -162,16 +144,13 @@ pipeline {
                     // Cleanup on EC2
                     echo '🧹 Cleaning up files on EC2 instance...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
-                        sudo rm -rf /home/ec2-user/kubernetes/
-                        sudo rm -rf /home/ec2-user/springboot_sample_deployment
-                        sudo docker system prune -a -f
-                        sudo rm -f /tmp/kubernetes-secrets.yml
-                        sudo rm -rf /var/lib/docker/containers/*
-                    EOF
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    "sudo rm -rf /home/ec2-user/kubernetes/ && \
+                     sudo rm -rf /home/ec2-user/springboot_sample_deployment && \
+                     sudo docker system prune -a -f && \
+                     sudo rm -f /tmp/kubernetes-secrets.yml && \
+                     sudo rm -rf /var/lib/docker/containers/*"
                     '''
-
-                    echo '✅ Cleanup completed successfully on Jenkins & EC2.'
                 }
             }
         }
