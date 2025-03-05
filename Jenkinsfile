@@ -108,16 +108,28 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS from EC2...'
-                    sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
-                    "kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
-                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config && \
-                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
-                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml --kubeconfig /home/ec2-user/.kube/config"
-                    '''
+                    sh """
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 '
+                    export AWS_REGION=${AWS_REGION} && \
+                    export AWS_ACCOUNT_ID=${AWS_ACCOUNT_ID} && \
+
+                    # Replace placeholders in YAML files
+                    sed -i "s|{{AWS_ACCOUNT_ID}}|$AWS_ACCOUNT_ID|g" /home/ec2-user/springboot_sample_deployment/kubernetes/*.yml && \
+                    sed -i "s|{{AWS_REGION}}|$AWS_REGION|g" /home/ec2-user/springboot_sample_deployment/kubernetes/*.yml && \
+
+                    # Ensure the namespace exists
+                    kubectl create namespace default --dry-run=client -o yaml | kubectl apply -f - --kubeconfig /home/ec2-user/.kube/config && \
+
+                    # Apply Kubernetes YAML files with replaced values
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config && \
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml --kubeconfig /home/ec2-user/.kube/config'
+                    """
                 }
             }
         }
+
 
         stage('Verify Deployment') {
             steps {

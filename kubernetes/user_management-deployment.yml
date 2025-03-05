@@ -14,10 +14,20 @@ spec:
     spec:
       containers:
         - name: user-management
-          image: "{{`{{AWS_ID}}`}}.dkr.ecr.{{`{{AWS_REGION}}`}}.amazonaws.com/user_management:latest"
+          image: "{{AWS_ACCOUNT_ID}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/user_management:latest"
           ports:
             - containerPort: 8080
           env:
+            - name: AWS_ID
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: AWS_ID
+            - name: AWS_REGION
+              valueFrom:
+                secretKeyRef:
+                  name: postgres-credentials
+                  key: AWS_REGION
             - name: DB_URL
               valueFrom:
                 secretKeyRef:

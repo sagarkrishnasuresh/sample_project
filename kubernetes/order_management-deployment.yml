@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: order-management
-          image: "{{`{{AWS_ID}}`}}.dkr.ecr.{{`{{AWS_REGION}}`}}.amazonaws.com/order_management:latest"
+          image: "{{AWS_ACCOUNT_ID}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/order_management:latest"
           ports:
             - containerPort: 8082
           env:
