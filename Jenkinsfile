@@ -63,16 +63,16 @@ pipeline {
             }
         }
 
-//         stage('Run Ansible Playbook on EC2') {
-//             steps {
-//                 script {
-//                     echo '🔹 Running Ansible Playbook to handle Docker build & push, and PostgreSQL setup...'
-//                     dir('Ansible') {
-//                         sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
-//                     }
-//                 }
-//             }
-//         }
+        stage('Run Ansible Playbook on EC2') {
+            steps {
+                script {
+                    echo '🔹 Running Ansible Playbook to handle Docker build & push, and PostgreSQL setup...'
+                    dir('Ansible') {
+                        sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
+                    }
+                }
+            }
+        }
 
         stage('Setup AWS EKS Kubeconfig on EC2') {
             steps {
