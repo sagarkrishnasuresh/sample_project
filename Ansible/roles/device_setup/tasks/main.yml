@@ -1,126 +1,126 @@
 ---
-#- name: Install Required Packages (Ubuntu)
-#  apt:
-#    name:
-#      - docker.io
-#      - ansible
-#      - python3-pip
-#      - jq
-#    state: present
-#    update_cache: yes
-#  when: ansible_os_family == "Debian"
-#
-#- name: Install Required Packages (RHEL/CentOS)
-#  dnf:
-#    name:
-#      - docker
-#      - ansible
-#      - python3-pip
-#      - jq
-#    state: present
-#    update_cache: yes
-#  when: ansible_os_family == "RedHat"
-#
-#
-#
-#- name: Install AWS CLI (if not installed)
-#  shell: |
-#    if ! command -v aws &> /dev/null; then
-#      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-#      unzip awscliv2.zip
-#      sudo ./aws/install
-#      rm -rf awscliv2.zip aws
-#    fi
-#  args:
-#    executable: /bin/bash
-#
-#- name: Force Install Docker SDK for Python (ignore dependency issues)
-#  shell: |
-#    pip3 install --ignore-installed docker
-#  args:
-#    executable: /bin/bash
-#
-#
-#- name: Enable and Start Docker Service
-#  systemd:
-#    name: docker
-#    state: started
-#    enabled: yes
-#
-#- name: Check if kubectl is Installed
-#  stat:
-#    path: /usr/local/bin/kubectl
-#  register: kubectl_file
-#
-#- name: Install kubectl (if not installed)
-#  get_url:
-#    url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
-#    dest: /usr/local/bin/kubectl
-#    mode: '0755'
-#  when: not kubectl_file.stat.exists
-#
-#- name: Verify kubectl Installation
-#  command: kubectl version --client
-#  register: kubectl_result
-#  ignore_errors: yes
-#
-#- name: Create Symlink for kubectl (if missing)
-#  file:
-#    src: /usr/local/bin/kubectl
-#    dest: /usr/bin/kubectl
-#    state: link
-#    force: yes
-#
-#- name: Check if eksctl is Installed
-#  stat:
-#    path: /usr/local/bin/eksctl
-#  register: eksctl_file
-#
-#- name: Download and Install eksctl (if not installed)
-#  shell: |
-#    curl -sL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" -o /tmp/eksctl.tar.gz
-#    tar -xzf /tmp/eksctl.tar.gz -C /tmp
-#    mv /tmp/eksctl /usr/local/bin/
-#    chmod +x /usr/local/bin/eksctl
-#  args:
-#    executable: /bin/bash
-#  when: not eksctl_file.stat.exists
-#
-#- name: Ensure required directories exist on EC2
-#  file:
-#    path: "{{ item }}"
-#    state: directory
-#    owner: ec2-user
-#    group: ec2-user
-#    mode: '0755'
-#  with_items:
-#    - /home/ec2-user/springboot_sample_deployment/order_management/target
-#    - /home/ec2-user/springboot_sample_deployment/user_management/target
-#
-#
-#- name: Ensure Kubernetes directory exists on EC2
-#  file:
-#    path: /home/ec2-user/springboot_sample_deployment/kubernetes
-#    state: directory
-#    owner: ec2-user
-#    group: ec2-user
-#    mode: '0755'
-#
-#- name: Copy Kubernetes manifests to EC2
-#  copy:
-#    src: "{{ playbook_dir }}/../kubernetes/"
-#    dest: /home/ec2-user/springboot_sample_deployment/kubernetes
-#    owner: ec2-user
-#    group: ec2-user
-#    mode: '0644'
-#
-#- name: Copy Dockerfiles to EC2
-#  copy:
-#    src: "{{ playbook_dir }}/../order_management/Dockerfile"
-#    dest: "/home/ec2-user/springboot_sample_deployment/order_management/Dockerfile"
-#    owner: ec2-user
-#    group: ec2-user
-#    mode: '0644'
+- name: Install Required Packages (Ubuntu)
+  apt:
+    name:
+      - docker.io
+      - ansible
+      - python3-pip
+      - jq
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "Debian"
+
+- name: Install Required Packages (RHEL/CentOS)
+  dnf:
+    name:
+      - docker
+      - ansible
+      - python3-pip
+      - jq
+    state: present
+    update_cache: yes
+  when: ansible_os_family == "RedHat"
+
+
+
+- name: Install AWS CLI (if not installed)
+  shell: |
+    if ! command -v aws &> /dev/null; then
+      curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+      unzip awscliv2.zip
+      sudo ./aws/install
+      rm -rf awscliv2.zip aws
+    fi
+  args:
+    executable: /bin/bash
+
+- name: Force Install Docker SDK for Python (ignore dependency issues)
+  shell: |
+    pip3 install --ignore-installed docker
+  args:
+    executable: /bin/bash
+
+
+- name: Enable and Start Docker Service
+  systemd:
+    name: docker
+    state: started
+    enabled: yes
+
+- name: Check if kubectl is Installed
+  stat:
+    path: /usr/local/bin/kubectl
+  register: kubectl_file
+
+- name: Install kubectl (if not installed)
+  get_url:
+    url: https://dl.k8s.io/release/v1.27.0/bin/linux/amd64/kubectl
+    dest: /usr/local/bin/kubectl
+    mode: '0755'
+  when: not kubectl_file.stat.exists
+
+- name: Verify kubectl Installation
+  command: kubectl version --client
+  register: kubectl_result
+  ignore_errors: yes
+
+- name: Create Symlink for kubectl (if missing)
+  file:
+    src: /usr/local/bin/kubectl
+    dest: /usr/bin/kubectl
+    state: link
+    force: yes
+
+- name: Check if eksctl is Installed
+  stat:
+    path: /usr/local/bin/eksctl
+  register: eksctl_file
+
+- name: Download and Install eksctl (if not installed)
+  shell: |
+    curl -sL "https://github.com/weaveworks/eksctl/releases/latest/download/eksctl_Linux_amd64.tar.gz" -o /tmp/eksctl.tar.gz
+    tar -xzf /tmp/eksctl.tar.gz -C /tmp
+    mv /tmp/eksctl /usr/local/bin/
+    chmod +x /usr/local/bin/eksctl
+  args:
+    executable: /bin/bash
+  when: not eksctl_file.stat.exists
+
+- name: Ensure required directories exist on EC2
+  file:
+    path: "{{ item }}"
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+  with_items:
+    - /home/ec2-user/springboot_sample_deployment/order_management/target
+    - /home/ec2-user/springboot_sample_deployment/user_management/target
+
+
+- name: Ensure Kubernetes directory exists on EC2
+  file:
+    path: /home/ec2-user/springboot_sample_deployment/kubernetes
+    state: directory
+    owner: ec2-user
+    group: ec2-user
+    mode: '0755'
+
+- name: Copy Kubernetes manifests to EC2
+  copy:
+    src: "{{ playbook_dir }}/../kubernetes/"
+    dest: /home/ec2-user/springboot_sample_deployment/kubernetes
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
+
+- name: Copy Dockerfiles to EC2
+  copy:
+    src: "{{ playbook_dir }}/../order_management/Dockerfile"
+    dest: "/home/ec2-user/springboot_sample_deployment/order_management/Dockerfile"
+    owner: ec2-user
+    group: ec2-user
+    mode: '0644'
 
 - name: Copy JAR file for order_management to EC2 (Fastest Method)
   synchronize:
