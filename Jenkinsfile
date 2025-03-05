@@ -79,7 +79,7 @@ pipeline {
                 script {
                     echo '🔹 Configuring Kubernetes access for AWS EKS on EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
                     "aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --kubeconfig /home/ec2-user/.kube/config && \
                      echo '✅ Using existing kubeconfig for AWS EKS' && \
                      kubectl config current-context --kubeconfig /home/ec2-user/.kube/config"
@@ -93,7 +93,7 @@ pipeline {
                         script {
                             echo '🔹 Creating AWS ECR Kubernetes Secret on EC2...'
                             sh '''
-                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
                             "kubectl create secret docker-registry aws-ecr-secret \
                               --docker-server=145023095187.dkr.ecr.eu-north-1.amazonaws.com \
                               --docker-username=AWS \
@@ -109,7 +109,7 @@ pipeline {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS from EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
                     "kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
                      kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config && \
                      kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
@@ -124,7 +124,7 @@ pipeline {
                 script {
                     echo '🔹 Checking if all pods and services are running on EC2...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
                     "kubectl get pods -o wide --kubeconfig /home/ec2-user/.kube/config && \
                      kubectl get svc -o wide --kubeconfig /home/ec2-user/.kube/config"
                     '''
@@ -147,7 +147,7 @@ pipeline {
                     // Cleanup on EC2
                     echo '🧹 Cleaning up files on EC2 instance...'
                     sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.129.30 \
                     "sudo rm -rf /home/ec2-user/kubernetes/ && \
                      sudo rm -rf /home/ec2-user/springboot_sample_deployment && \
                      sudo docker system prune -a -f && \
