@@ -14,7 +14,7 @@ spec:
     spec:
       containers:
         - name: postgres
-          image: "{{ AWS_ID }}.dkr.ecr.{{ AWS_REGION }}.amazonaws.com/postgres:latest"
+          image: "{{AWS_ACCOUNT_ID}}.dkr.ecr.{{AWS_REGION}}.amazonaws.com/postgres:latest"
           ports:
             - containerPort: 5432
           env:

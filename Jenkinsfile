@@ -121,6 +121,8 @@ pipeline {
                     kubectl create namespace default --dry-run=client -o yaml | kubectl apply -f - --kubeconfig /home/ec2-user/.kube/config && \
 
                     # Apply Kubernetes YAML files with replaced values
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/postgres-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/postgres-service.yml --kubeconfig /home/ec2-user/.kube/config && \
                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig /home/ec2-user/.kube/config && \
                     kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig /home/ec2-user/.kube/config && \
