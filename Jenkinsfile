@@ -89,11 +89,11 @@ pipeline {
                         export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
-                        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
+                        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 <<EOF
                             echo '✅ Using existing kubeconfig for AWS EKS...'
                             export KUBECONFIG=/home/ec2-user/.kube/config
                             kubectl config current-context
-                        'EOF'
+                        EOF
                         '''
                     }
                 }
