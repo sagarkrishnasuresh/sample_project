@@ -93,7 +93,7 @@ pipeline {
                             echo '✅ Using existing kubeconfig for AWS EKS...'
                             export KUBECONFIG=/home/ec2-user/.kube/config
                             kubectl config current-context
-                        EOF
+                        'EOF'
                         '''
                     }
                 }
