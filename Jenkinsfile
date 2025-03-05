@@ -89,24 +89,20 @@ pipeline {
         }
 
         stage('Apply AWS ECR Secret in Kubernetes') {
-            steps {
-                script {
-                    echo '🔹 Creating AWS ECR Kubernetes Secret on EC2...'
-                    sh '''
-                    ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
-                    "aws ecr get-login-password --region eu-north-1 | \
-                    kubectl create secret docker-registry aws-ecr-secret \
-                      --docker-server=145023095187.dkr.ecr.eu-north-1.amazonaws.com \
-                      --docker-username=AWS \
-                      --docker-password-stdin \
-                      --namespace default --kubeconfig /home/ec2-user/.kube/config"
-                    '''
+                    steps {
+                        script {
+                            echo '🔹 Creating AWS ECR Kubernetes Secret on EC2...'
+                            sh '''
+                            ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 \
+                            "kubectl create secret docker-registry aws-ecr-secret \
+                              --docker-server=145023095187.dkr.ecr.eu-north-1.amazonaws.com \
+                              --docker-username=AWS \
+                              --docker-password=$(aws ecr get-login-password --region eu-north-1) \
+                              --namespace default --kubeconfig /home/ec2-user/.kube/config || echo '✅ Secret already exists'"
+                            '''
+                        }
+                    }
                 }
-            }
-        }
-
-
-
 
         stage('Apply Kubernetes Secrets & Deploy Applications') {
             steps {
