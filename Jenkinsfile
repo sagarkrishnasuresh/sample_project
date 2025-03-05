@@ -64,16 +64,16 @@ pipeline {
             }
         }
 
-        stage('Run Ansible Playbook on EC2') {
-            steps {
-                script {
-                    echo '🔹 Running Ansible Playbook to handle Docker build & push, and PostgreSQL setup...'
-                    dir('Ansible') {
-                        sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
-                    }
-                }
-            }
-        }
+//         stage('Run Ansible Playbook on EC2') {
+//             steps {
+//                 script {
+//                     echo '🔹 Running Ansible Playbook to handle Docker build & push, and PostgreSQL setup...'
+//                     dir('Ansible') {
+//                         sh 'ansible-playbook -i inventory.ini complete_deployment.yml'
+//                     }
+//                 }
+//             }
+//         }
 
         stage('Setup AWS EKS Kubeconfig') {
             steps {
@@ -86,7 +86,13 @@ pipeline {
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                     ]]) {
                         sh '''
-                        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << 'EOF'
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+
+                        ssh -o StrictHostKeyChecking=no -i /var/lib/jenkins/.ssh/my-key.pem ec2-user@51.20.115.71 << EOF
+                            export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                            export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+                            export AWS_REGION=$AWS_REGION
                             mkdir -p /home/ec2-user/.kube
                             aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --kubeconfig /home/ec2-user/.kube/config
                         EOF
@@ -95,6 +101,7 @@ pipeline {
                 }
             }
         }
+
 
         stage('Apply AWS ECR Secret in Kubernetes') {
             steps {
