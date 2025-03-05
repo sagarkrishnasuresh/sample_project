@@ -7,6 +7,7 @@ pipeline {
         AWS_REGION = 'eu-north-1'
         EKS_CLUSTER_NAME = 'my-cluster'
         AWS_ACCOUNT_ID = '145023095187'
+        KUBECONFIG_PATH = "/home/ec2-user/.kube/config"  // Use absolute path to kubeconfig
     }
     stages {
 
@@ -34,33 +35,34 @@ pipeline {
                 }
             }
         }
+
         stage('Ensure ECR Repositories Exist') {
-                    steps {
-                        script {
-                            echo '🔹 Checking if AWS ECR repositories exist...'
-                            withCredentials([[
-                                $class: 'AmazonWebServicesCredentialsBinding',
-                                credentialsId: 'aws-credentials',
-                                accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                                secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                            ]]) {
-                                sh '''
-                                export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                                export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
+            steps {
+                script {
+                    echo '🔹 Checking if AWS ECR repositories exist...'
+                    withCredentials([[
+                        $class: 'AmazonWebServicesCredentialsBinding',
+                        credentialsId: 'aws-credentials',
+                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
+                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
+                    ]]) {
+                        sh '''
+                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
+                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
 
-                                aws ecr describe-repositories --repository-names user_management --region $AWS_REGION || \
-                                aws ecr create-repository --repository-name user_management --region $AWS_REGION
+                        aws ecr describe-repositories --repository-names user_management --region $AWS_REGION || \
+                        aws ecr create-repository --repository-name user_management --region $AWS_REGION
 
-                                aws ecr describe-repositories --repository-names order_management --region $AWS_REGION || \
-                                aws ecr create-repository --repository-name order_management --region $AWS_REGION
+                        aws ecr describe-repositories --repository-names order_management --region $AWS_REGION || \
+                        aws ecr create-repository --repository-name order_management --region $AWS_REGION
 
-                                aws ecr describe-repositories --repository-names postgres --region $AWS_REGION || \
-                                aws ecr create-repository --repository-name postgres --region $AWS_REGION
-                                '''
-                            }
-                        }
+                        aws ecr describe-repositories --repository-names postgres --region $AWS_REGION || \
+                        aws ecr create-repository --repository-name postgres --region $AWS_REGION
+                        '''
                     }
                 }
+            }
+        }
 
         stage('Run Ansible Playbook on EC2') {
             steps {
@@ -73,10 +75,10 @@ pipeline {
             }
         }
 
-        stage('Apply AWS ECR Secret in Kubernetes') {
+        stage('Setup AWS EKS Kubeconfig') {
             steps {
                 script {
-                    echo '🔹 Applying AWS ECR Kubernetes Secret...'
+                    echo '🔹 Configuring Kubernetes access for AWS EKS...'
                     withCredentials([[
                         $class: 'AmazonWebServicesCredentialsBinding',
                         credentialsId: 'aws-credentials',
@@ -84,10 +86,20 @@ pipeline {
                         secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
                     ]]) {
                         sh '''
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml
+                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME --kubeconfig $KUBECONFIG_PATH
                         '''
                     }
+                }
+            }
+        }
+
+        stage('Apply AWS ECR Secret in Kubernetes') {
+            steps {
+                script {
+                    echo '🔹 Applying AWS ECR Kubernetes Secret...'
+                    sh '''
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/aws-ecr-secret.yml --kubeconfig $KUBECONFIG_PATH
+                    '''
                 }
             }
         }
@@ -96,17 +108,9 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Verifying EKS cluster is active...'
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-                        aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"
-                        '''
-                    }
+                    sh '''
+                    aws eks describe-cluster --name $EKS_CLUSTER_NAME --region $AWS_REGION --query "cluster.status"
+                    '''
                 }
             }
         }
@@ -115,21 +119,13 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Deploying user and order management apps to AWS EKS...'
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml
-                        kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml
-                        '''
-                    }
+                    sh '''
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/kubernetes-secrets.yml --kubeconfig $KUBECONFIG_PATH
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-deployment.yml --kubeconfig $KUBECONFIG_PATH
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/user_management-service.yml --kubeconfig $KUBECONFIG_PATH
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-deployment.yml --kubeconfig $KUBECONFIG_PATH
+                    kubectl apply -f /home/ec2-user/springboot_sample_deployment/kubernetes/order_management-service.yml --kubeconfig $KUBECONFIG_PATH
+                    '''
                 }
             }
         }
@@ -138,23 +134,13 @@ pipeline {
             steps {
                 script {
                     echo '🔹 Checking if all pods and services are running...'
-                    withCredentials([[
-                        $class: 'AmazonWebServicesCredentialsBinding',
-                        credentialsId: 'aws-credentials',
-                        accessKeyVariable: 'AWS_ACCESS_KEY_ID',
-                        secretKeyVariable: 'AWS_SECRET_ACCESS_KEY'
-                    ]]) {
-                        sh '''
-                        aws eks update-kubeconfig --region $AWS_REGION --name $EKS_CLUSTER_NAME
-                        kubectl get pods -o wide
-                        kubectl get svc -o wide
-                        '''
-                    }
+                    sh '''
+                    kubectl get pods -o wide --kubeconfig $KUBECONFIG_PATH
+                    kubectl get svc -o wide --kubeconfig $KUBECONFIG_PATH
+                    '''
                 }
             }
         }
-
-
 
         stage('Cleanup') {
             steps {
